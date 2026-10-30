@@ -37,9 +37,9 @@ async function dispatch(env) {
   } catch (e) {
     throw new Error("GitHub dispatch network failure: " + String(e?.name || "NetworkError"));
   }
-  // GitHub returns 204 No Content once it accepts workflow_dispatch.
+  // GitHub can return either 204 No Content or 200 with the created run details.
   // Never log response content or tokens, including on errors.
-  if (response.status !== 204) {
+  if (response.status !== 204 && response.status !== 200) {
     throw new Error("GitHub workflow_dispatch rejected, HTTP " + response.status);
   }
   console.log(JSON.stringify({event:"dnshe_github_dispatch",status:"accepted",repo:TARGET,workflow:WORKFLOW}));
