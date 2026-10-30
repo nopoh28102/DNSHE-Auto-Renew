@@ -82,13 +82,17 @@ class DnsheClient {
           ...(method === "POST" ? {"Content-Type":"application/json"} : {}),
         },
         ...(method === "POST" ? {body:JSON.stringify(params)} : {}),
-        redirect:"error",
+        redirect:"manual",
         signal:AbortSignal.timeout(25000),
       });
     } catch (_e) {
       // Do not print request headers or response text: credentials stay private.
       throw new RenewalError("dnshe_network_failure");
     }
+    // Cloudflare Workers does not support redirect:"error". With manual mode,
+    // never follow a cross-origin redirect carrying private API headers.
+    if (response.status >= 300 && response.status < 400)
+      throw new RenewalError("dnshe_unexpected_redirect");
     let data;
     try { data = await response.json(); }
     catch (_e) { throw new RenewalError("dnshe_not_json"); }
